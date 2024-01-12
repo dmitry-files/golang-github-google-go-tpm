@@ -3,3 +3,6 @@
 
 # Generated files
 constants_string.go
+
+/.pc/
+/_build/
