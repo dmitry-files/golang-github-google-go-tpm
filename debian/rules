@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+
+
+# exclude simulator tests, they rely on unpackaged
+# github.com/google/go-tpm-tools
+export DH_GOLANG_EXCLUDES := \
+	examples \
+	tpm2/transport/simulator \
+	tpm2/test \
+	legacy/tmp2/test
+
+%:
+	dh $@ --builddirectory=_build --buildsystem=golang

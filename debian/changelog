@@ -1,0 +1,5 @@
+golang-github-google-go-tpm (0.9.0-1) UNRELEASED; urgency=medium
+
+  * Initial release (Closes: #1060657)
+
+  -- Maytham Alsudany <maytha8thedev@gmail.com>  Fri, 12 Jan 2024 15:49:06 +0800
