@@ -182,7 +182,7 @@ const (
 	TPMCCPolicyPhysicalPresence     TPMCC = 0x00000187
 	TPMCCPolicyDuplicationSelect    TPMCC = 0x00000188
 	TPMCCPolicyGetDigest            TPMCC = 0x00000189
-	TPMCCTestParams                 TPMCC = 0x0000018A
+	TPMCCTestParms                  TPMCC = 0x0000018A
 	TPMCCCommit                     TPMCC = 0x0000018B
 	TPMCCPolicyPassword             TPMCC = 0x0000018C
 	TPMCCZGen2Phase                 TPMCC = 0x0000018D
@@ -632,6 +632,18 @@ const (
 	TPMHTTransient     TPMHT = 0x80
 	TPMHTPersistent    TPMHT = 0x81
 	TPMHTAC            TPMHT = 0x90
+)
+
+// Saved Context transient object handles.
+// See definition in Part 2: Structures, section 14.6.2
+// Context Handle Values come from table 211
+const (
+	// an ordinary transient object
+	TPMIDHSavedTransient TPMIDHSaved = 0x80000000
+	// a sequence object
+	TPMIDHSavedSequence TPMIDHSaved = 0x80000001
+	// a transient object with the stClear attribute SET
+	TPMIDHSavedTransientClear TPMIDHSaved = 0x80000002
 )
 
 // TPMHandle represents a TPM_HANDLE.
