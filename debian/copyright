@@ -17,6 +17,7 @@ License: Apache-2.0
 
 Files: debian/*
 Copyright: 2024 Maytham Alsudany <maytha8thedev@gmail.com>
+           2025 Simon Josefsson <simon@josefsson.org>
 License: Apache-2.0
 Comment: Debian packaging is licensed under the same terms as upstream
 
