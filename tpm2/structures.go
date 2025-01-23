@@ -127,14 +127,6 @@ func (h TPMHandle) KnownName() *TPM2BName {
 		result := make([]byte, 4)
 		binary.BigEndian.PutUint32(result, h.HandleValue())
 		return &TPM2BName{Buffer: result}
-	case TPMHTTransient:
-		// The Name of a sequence object is an Empty Buffer
-		// See part 1: Architecture, section 32.4.5
-		if h == TPMIDHSavedSequence {
-			return &TPM2BName{
-				Buffer: []byte{},
-			}
-		}
 	}
 	return nil
 }
@@ -208,6 +200,9 @@ type TPMAObject struct {
 	// be with an HMAC session or with a password using the authValue
 	// of the object or a policy session.
 	AdminWithPolicy bool `gotpm:"bit=7"`
+	// SET (1): The object exists only within a firmware-limited hierarchy.
+	// CLEAR (0): The object can exist outside a firmware-limited hierarchy.
+	FirmwareLimited bool `gotpm:"bit=8"`
 	// SET (1): The object is not subject to dictionary attack
 	// protections.
 	// CLEAR (0): The object is subject to dictionary attack
@@ -548,6 +543,10 @@ type TPM2BMaxBuffer TPM2BData
 // TPM2BMaxNVBuffer represents a TPM2B_MAX_NV_BUFFER.
 // See definition in Part 2: Structures, section 10.4.9.
 type TPM2BMaxNVBuffer TPM2BData
+
+// TPM2BIV represents a TPM2B_IV.
+// See definition in Part 2: Structures, section 10.4.11.
+type TPM2BIV TPM2BData
 
 // TPM2BName represents a TPM2B_NAME.
 // See definition in Part 2: Structures, section 10.5.3.
@@ -2867,6 +2866,38 @@ func New2BTemplate[C TemplateContents](data C) TPM2BTemplate {
 	return TPM2BTemplate{
 		Buffer: Marshal(data),
 	}
+}
+
+// Sym returns the 'sym' member of the union.
+func (u *TPMUSensitiveComposite) Sym() (*TPM2BSymKey, error) {
+	if u.selector == TPMAlgSymCipher {
+		return u.contents.(*TPM2BSymKey), nil
+	}
+	return nil, fmt.Errorf("did not contain sym (selector value was %v)", u.selector)
+}
+
+// Bits returns the 'bits' member of the union.
+func (u *TPMUSensitiveComposite) Bits() (*TPM2BSensitiveData, error) {
+	if u.selector == TPMAlgKeyedHash {
+		return u.contents.(*TPM2BSensitiveData), nil
+	}
+	return nil, fmt.Errorf("did not contain bits (selector value was %v)", u.selector)
+}
+
+// RSA returns the 'rsa' member of the union.
+func (u *TPMUSensitiveComposite) RSA() (*TPM2BPrivateKeyRSA, error) {
+	if u.selector == TPMAlgRSA {
+		return u.contents.(*TPM2BPrivateKeyRSA), nil
+	}
+	return nil, fmt.Errorf("did not contain rsa (selector value was %v)", u.selector)
+}
+
+// ECC returns the 'ecc' member of the union.
+func (u *TPMUSensitiveComposite) ECC() (*TPM2BECCParameter, error) {
+	if u.selector == TPMAlgECC {
+		return u.contents.(*TPM2BECCParameter), nil
+	}
+	return nil, fmt.Errorf("did not contain ecc (selector value was %v)", u.selector)
 }
 
 // TPMUSensitiveComposite represents a TPMU_SENSITIVE_COMPOSITE.

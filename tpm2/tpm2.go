@@ -452,6 +452,35 @@ type CreateLoadedResponse struct {
 	Name TPM2BName
 }
 
+// EncryptDecrypt2 is the input to TPM2_EncryptDecrypt2
+type EncryptDecrypt2 struct {
+	// reference to public portion of symmetric key to use for encryption
+	KeyHandle handle `gotpm:"handle,auth"`
+	Message   TPM2BMaxBuffer
+	Decrypt   TPMIYesNo
+	Mode      TPMIAlgSymMode `gotpm:"nullable"`
+	IV        TPM2BIV
+}
+
+// Command implements the Command interface.
+func (EncryptDecrypt2) Command() TPMCC { return TPMCCEncryptDecrypt2 }
+
+// Execute executes the command and returns the response.
+func (cmd EncryptDecrypt2) Execute(t transport.TPM, s ...Session) (*EncryptDecrypt2Response, error) {
+	var rsp EncryptDecrypt2Response
+	err := execute[EncryptDecrypt2Response](t, cmd, &rsp, s...)
+	if err != nil {
+		return nil, err
+	}
+	return &rsp, nil
+}
+
+// EncryptDecrypt2Response is the response from TPM2_EncryptDecrypt2.
+type EncryptDecrypt2Response struct {
+	OutData TPM2BMaxBuffer
+	IV      TPM2BIV
+}
+
 // RSAEncrypt is the input to TPM2_RSA_Encrypt
 // See definition in Part 3, Commands, section 14.2.
 type RSAEncrypt struct {
@@ -629,12 +658,12 @@ type HashSequenceStartResponse struct {
 // HmacStart is the input to TPM2_HMAC_Start.
 // See definition in Part 3, Commands, section 17.2.2
 type HmacStart struct {
-	// HMAC key handle requiring an authorization session for the USER role
-	Handle AuthHandle `gotpm:"handle,auth"`
+	// HMAC key handle
+	Handle handle `gotpm:"handle,auth"`
 	// authorization value for subsequent use of the sequence
 	Auth TPM2BAuth
 	// the hash algorithm to use for the hmac sequence
-	HashAlg TPMIAlgHash
+	HashAlg TPMIAlgHash `gotpm:"nullable"`
 }
 
 // Command implements the Command interface.
@@ -660,7 +689,7 @@ type HmacStartResponse struct {
 // See definition in Part 3, Commands, section 17.4
 type SequenceUpdate struct {
 	// handle for the sequence object
-	SequenceHandle handle `gotpm:"handle,auth"`
+	SequenceHandle handle `gotpm:"handle,auth,anon"`
 	// data to be added to hash
 	Buffer TPM2BMaxBuffer
 }
@@ -684,7 +713,7 @@ type SequenceUpdateResponse struct{}
 // See definition in Part 3, Commands, section 17.5
 type SequenceComplete struct {
 	// authorization for the sequence
-	SequenceHandle handle `gotpm:"handle,auth"`
+	SequenceHandle handle `gotpm:"handle,auth,anon"`
 	// data to be added to the hash/HMAC
 	Buffer TPM2BMaxBuffer
 	// hierarchy of the ticket for a hash
@@ -1216,6 +1245,68 @@ func (cmd PolicyPCR) Update(policy *PolicyCalculator) error {
 // PolicyPCRResponse is the response from TPM2_PolicyPCR.
 type PolicyPCRResponse struct{}
 
+// PolicyAuthValue is the input to TPM2_PolicyAuthValue.
+// See definition in Part 3, Commands, section 23.17.
+type PolicyAuthValue struct {
+	// handle for the policy session being extended
+	PolicySession handle `gotpm:"handle"`
+}
+
+// Command implements the Command interface.
+func (PolicyAuthValue) Command() TPMCC { return TPMCCPolicyAuthValue }
+
+// Execute executes the command and returns the response.
+func (cmd PolicyAuthValue) Execute(t transport.TPM, s ...Session) (*PolicyAuthValueResponse, error) {
+	var rsp PolicyAuthValueResponse
+	err := execute[PolicyAuthValueResponse](t, cmd, &rsp, s...)
+	if err != nil {
+		return nil, err
+	}
+	return &rsp, nil
+}
+
+// Update implements the PolicyAuthValue interface.
+func (cmd PolicyAuthValue) Update(policy *PolicyCalculator) error {
+	return policy.Update(TPMCCPolicyAuthValue)
+}
+
+// PolicyAuthValueResponse is the response from TPM2_PolicyAuthValue.
+type PolicyAuthValueResponse struct{}
+
+// PolicyDuplicationSelect is the input to TPM2_PolicyDuplicationSelect.
+// See definition in Part 3, Commands, section 23.15.
+type PolicyDuplicationSelect struct {
+	// handle for the policy session being extended
+	PolicySession handle `gotpm:"handle"`
+	ObjectName    TPM2BName
+	NewParentName TPM2BName
+	IncludeObject TPMIYesNo
+}
+
+// Command implements the Command interface.
+func (PolicyDuplicationSelect) Command() TPMCC { return TPMCCPolicyDuplicationSelect }
+
+// Execute executes the command and returns the response.
+func (cmd PolicyDuplicationSelect) Execute(t transport.TPM, s ...Session) (*PolicyDuplicationSelectResponse, error) {
+	var rsp PolicyDuplicationSelectResponse
+	err := execute[PolicyDuplicationSelectResponse](t, cmd, &rsp, s...)
+	if err != nil {
+		return nil, err
+	}
+	return &rsp, nil
+}
+
+// Update implements the PolicyDuplicationSelect interface.
+func (cmd PolicyDuplicationSelect) Update(policy *PolicyCalculator) error {
+	if cmd.IncludeObject {
+		return policy.Update(TPMCCPolicyDuplicationSelect, cmd.ObjectName.Buffer, cmd.NewParentName.Buffer, cmd.IncludeObject)
+	}
+	return policy.Update(TPMCCPolicyDuplicationSelect, cmd.NewParentName.Buffer, cmd.IncludeObject)
+}
+
+// PolicyDuplicationSelectResponse is the response from TPM2_PolicyDuplicationSelect.
+type PolicyDuplicationSelectResponse struct{}
+
 // PolicyNV is the input to TPM2_PolicyNV.
 // See definition in Part 3, Commands, section 23.9.
 type PolicyNV struct {
@@ -1452,7 +1543,8 @@ type PolicyAuthorizeNVResponse struct{}
 // See definition in Part 3, Commands, section 24.1
 type CreatePrimary struct {
 	// TPM_RH_ENDORSEMENT, TPM_RH_OWNER, TPM_RH_PLATFORM+{PP},
-	// or TPM_RH_NULL
+	// TPM_RH_NULL, TPM_RH_FW_ENDORSEMENT, TPM_RH_FW_OWNER
+	// TPM_RH_FW_PLATFORM+{PP}  or TPM_RH_FW_NULL
 	PrimaryHandle handle `gotpm:"handle,auth"`
 	// the sensitive data
 	InSensitive TPM2BSensitiveCreate
