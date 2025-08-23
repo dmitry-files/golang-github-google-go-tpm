@@ -1,5 +1,9 @@
 #!/usr/bin/make -f
 
+export DH_GOLANG_INSTALL_EXTRA := \
+	tpm2/test/testvectors/ecc_labeled_encaps.json \
+	tpm2/test/testvectors/rsa_labeled_encaps.json
+
 # exclude simulator tests, they rely on unpackaged
 # github.com/google/go-tpm-tools
 export DH_GOLANG_EXCLUDES := \
