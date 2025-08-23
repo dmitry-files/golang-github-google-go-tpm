@@ -341,7 +341,7 @@ type MakeCredential struct {
 	// the credential information
 	Credential TPM2BDigest
 	// Name of the object to which the credential applies
-	ObjectNamae TPM2BName
+	ObjectName TPM2BName
 }
 
 // Command implements the Command interface.
@@ -600,6 +600,35 @@ type HashResponse struct {
 	// ticket indicating that the sequence of octets used to
 	// compute outDigest did not start with TPM_GENERATED_VALUE
 	Validation TPMTTKHashCheck
+}
+
+// Hmac is the input to TPM2_HMAC.
+// See definition in Part 3, Commands, section 15.5.
+type Hmac struct {
+	// HMAC key handle requiring an authorization session for the USER role
+	Handle AuthHandle `gotpm:"handle,auth"`
+	// HMAC data
+	Buffer TPM2BMaxBuffer
+	// Algorithm to use for HMAC
+	HashAlg TPMIAlgHash
+}
+
+// Command implements the Command interface.
+func (Hmac) Command() TPMCC { return TPMCCHMAC }
+
+// Execute executes the command and returns the response.
+func (cmd Hmac) Execute(t transport.TPM, s ...Session) (*HmacResponse, error) {
+	var rsp HmacResponse
+	if err := execute[HmacResponse](t, cmd, &rsp, s...); err != nil {
+		return nil, err
+	}
+	return &rsp, nil
+}
+
+// HmacResponse is the response from TPM2_HMAC.
+type HmacResponse struct {
+	// the returned HMAC in a sized buffer
+	OutHMAC TPM2BDigest
 }
 
 // GetRandom is the input to TPM2_GetRandom.
@@ -1817,6 +1846,27 @@ func (cmd Import) Execute(t transport.TPM, s ...Session) (*ImportResponse, error
 		return nil, err
 	}
 	return &rsp, nil
+}
+
+// ReadClock is the input to TPM2_ReadClock.
+// See definition in Part 3, Commands, section 29.1
+type ReadClock struct{}
+
+// Command implements the Command interface.
+func (ReadClock) Command() TPMCC { return TPMCCReadClock }
+
+// Execute executes the command and returns the response.
+func (cmd ReadClock) Execute(t transport.TPM, s ...Session) (*ReadClockResponse, error) {
+	var rsp ReadClockResponse
+	if err := execute[ReadClockResponse](t, cmd, &rsp, s...); err != nil {
+		return nil, err
+	}
+	return &rsp, nil
+}
+
+// ReadClockResponse is the response from TPM2_ReadClock.
+type ReadClockResponse struct {
+	CurrentTime TPMSTimeInfo
 }
 
 // GetCapability is the input to TPM2_GetCapability.

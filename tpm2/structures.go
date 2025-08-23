@@ -1368,7 +1368,7 @@ type SymKeyBitsContents interface {
 // create implements the unmarshallableWithHint interface.
 func (u *TPMUSymKeyBits) create(hint int64) (reflect.Value, error) {
 	switch TPMAlgID(hint) {
-	case TPMAlgAES:
+	case TPMAlgTDES, TPMAlgAES, TPMAlgSM4, TPMAlgCamellia:
 		var contents boxed[TPMKeyBits]
 		u.contents = &contents
 		u.selector = TPMAlgID(hint)
@@ -1388,7 +1388,7 @@ func (u TPMUSymKeyBits) get(hint int64) (reflect.Value, error) {
 		return reflect.ValueOf(nil), fmt.Errorf("incorrect union tag %v, is %v", hint, u.selector)
 	}
 	switch TPMAlgID(hint) {
-	case TPMAlgAES:
+	case TPMAlgTDES, TPMAlgAES, TPMAlgSM4, TPMAlgCamellia:
 		var contents boxed[TPMKeyBits]
 		if u.contents != nil {
 			contents = *u.contents.(*boxed[TPMKeyBits])
@@ -1413,6 +1413,18 @@ func NewTPMUSymKeyBits[C SymKeyBitsContents](selector TPMAlgID, contents C) TPMU
 	}
 }
 
+// Sym returns the 'sym' member of the union.
+func (u *TPMUSymKeyBits) Sym() (*TPMKeyBits, error) {
+
+	switch u.selector {
+	case TPMAlgTDES, TPMAlgAES, TPMAlgSM4, TPMAlgCamellia:
+		value := u.contents.(*boxed[TPMKeyBits]).unbox()
+		return value, nil
+	default:
+		return nil, fmt.Errorf("did not contain sym (selector value was %v)", u.selector)
+	}
+}
+
 // AES returns the 'aes' member of the union.
 func (u *TPMUSymKeyBits) AES() (*TPMKeyBits, error) {
 	if u.selector == TPMAlgAES {
@@ -1420,6 +1432,37 @@ func (u *TPMUSymKeyBits) AES() (*TPMKeyBits, error) {
 		return value, nil
 	}
 	return nil, fmt.Errorf("did not contain aes (selector value was %v)", u.selector)
+}
+
+// TDES returns the 'tdes' member of the union.
+//
+// Deprecated: TDES exists for historical compatibility
+// and is not recommended anymore.
+// https://csrc.nist.gov/news/2023/nist-to-withdraw-sp-800-67-rev-2
+func (u *TPMUSymKeyBits) TDES() (*TPMKeyBits, error) {
+	if u.selector == TPMAlgTDES {
+		value := u.contents.(*boxed[TPMKeyBits]).unbox()
+		return value, nil
+	}
+	return nil, fmt.Errorf("did not contain tdes (selector value was %v)", u.selector)
+}
+
+// SM4 returns the 'sm4' member of the union.
+func (u *TPMUSymKeyBits) SM4() (*TPMKeyBits, error) {
+	if u.selector == TPMAlgSM4 {
+		value := u.contents.(*boxed[TPMKeyBits]).unbox()
+		return value, nil
+	}
+	return nil, fmt.Errorf("did not contain sm4 (selector value was %v)", u.selector)
+}
+
+// Camellia returns the 'camellia' member of the union.
+func (u *TPMUSymKeyBits) Camellia() (*TPMKeyBits, error) {
+	if u.selector == TPMAlgCamellia {
+		value := u.contents.(*boxed[TPMKeyBits]).unbox()
+		return value, nil
+	}
+	return nil, fmt.Errorf("did not contain camellia (selector value was %v)", u.selector)
 }
 
 // XOR returns the 'xor' member of the union.
@@ -1446,7 +1489,7 @@ type SymModeContents interface {
 // create implements the unmarshallableWithHint interface.
 func (u *TPMUSymMode) create(hint int64) (reflect.Value, error) {
 	switch TPMAlgID(hint) {
-	case TPMAlgAES:
+	case TPMAlgTDES, TPMAlgAES, TPMAlgSM4, TPMAlgCamellia:
 		var contents boxed[TPMAlgID]
 		u.contents = &contents
 		u.selector = TPMAlgID(hint)
@@ -1466,7 +1509,7 @@ func (u TPMUSymMode) get(hint int64) (reflect.Value, error) {
 		return reflect.ValueOf(nil), fmt.Errorf("incorrect union tag %v, is %v", hint, u.selector)
 	}
 	switch TPMAlgID(hint) {
-	case TPMAlgAES:
+	case TPMAlgTDES, TPMAlgAES, TPMAlgSM4, TPMAlgCamellia:
 		var contents boxed[TPMAlgID]
 		if u.contents != nil {
 			contents = *u.contents.(*boxed[TPMAlgID])
@@ -1491,6 +1534,17 @@ func NewTPMUSymMode[C SymModeContents](selector TPMAlgID, contents C) TPMUSymMod
 	}
 }
 
+// Sym returns the 'sym' member of the union.
+func (u *TPMUSymMode) Sym() (*TPMIAlgSymMode, error) {
+	switch u.selector {
+	case TPMAlgTDES, TPMAlgAES, TPMAlgSM4, TPMAlgCamellia:
+		value := u.contents.(*boxed[TPMIAlgSymMode]).unbox()
+		return value, nil
+	default:
+		return nil, fmt.Errorf("did not contain sym (selector value was %v)", u.selector)
+	}
+}
+
 // AES returns the 'aes' member of the union.
 func (u *TPMUSymMode) AES() (*TPMIAlgSymMode, error) {
 	if u.selector == TPMAlgAES {
@@ -1498,6 +1552,37 @@ func (u *TPMUSymMode) AES() (*TPMIAlgSymMode, error) {
 		return value, nil
 	}
 	return nil, fmt.Errorf("did not contain aes (selector value was %v)", u.selector)
+}
+
+// TDES returns the 'tdes' member of the union.
+//
+// Deprecated: TDES exists for historical compatibility
+// and is not recommended anymore.
+// https://csrc.nist.gov/news/2023/nist-to-withdraw-sp-800-67-rev-2
+func (u *TPMUSymMode) TDES() (*TPMIAlgSymMode, error) {
+	if u.selector == TPMAlgTDES {
+		value := u.contents.(*boxed[TPMIAlgSymMode]).unbox()
+		return value, nil
+	}
+	return nil, fmt.Errorf("did not contain tdes (selector value was %v)", u.selector)
+}
+
+// SM4 returns the 'sm4' member of the union.
+func (u *TPMUSymMode) SM4() (*TPMIAlgSymMode, error) {
+	if u.selector == TPMAlgSM4 {
+		value := u.contents.(*boxed[TPMIAlgSymMode]).unbox()
+		return value, nil
+	}
+	return nil, fmt.Errorf("did not contain sm4 (selector value was %v)", u.selector)
+}
+
+// Camellia returns the 'camellia' member of the union.
+func (u *TPMUSymMode) Camellia() (*TPMIAlgSymMode, error) {
+	if u.selector == TPMAlgCamellia {
+		value := u.contents.(*boxed[TPMIAlgSymMode]).unbox()
+		return value, nil
+	}
+	return nil, fmt.Errorf("did not contain camellia (selector value was %v)", u.selector)
 }
 
 // TPMUSymDetails represents a TPMU_SYM_DETAILS.
@@ -1947,6 +2032,10 @@ type TPMSEncSchemeOAEP TPMSSchemeHash
 // See definition in Part 2: Structures, section 11.2.2.3.
 type TPMSKeySchemeECDH TPMSSchemeHash
 
+// TPMSKeySchemeECMQV represents a TPMS_KEY_SCHEME_ECMQV.
+// See definition in Part 2: Structures, section 11.2.2.3.
+type TPMSKeySchemeECMQV TPMSSchemeHash
+
 // TPMSKDFSchemeMGF1 represents a TPMS_KDF_SCHEME_MGF1.
 // See definition in Part 2: Structures, section 11.2.3.1.
 type TPMSKDFSchemeMGF1 TPMSSchemeHash
@@ -2123,7 +2212,7 @@ type TPMUAsymScheme struct {
 type AsymSchemeContents interface {
 	Marshallable
 	*TPMSSigSchemeRSASSA | *TPMSEncSchemeRSAES | *TPMSSigSchemeRSAPSS | *TPMSEncSchemeOAEP |
-		*TPMSSigSchemeECDSA | *TPMSKeySchemeECDH | *TPMSSchemeECDAA
+		*TPMSSigSchemeECDSA | *TPMSKeySchemeECDH | *TPMSKeySchemeECMQV | *TPMSSchemeECDAA
 }
 
 // create implements the unmarshallableWithHint interface.
@@ -2156,6 +2245,11 @@ func (u *TPMUAsymScheme) create(hint int64) (reflect.Value, error) {
 		return reflect.ValueOf(&contents), nil
 	case TPMAlgECDH:
 		var contents TPMSKeySchemeECDH
+		u.contents = &contents
+		u.selector = TPMAlgID(hint)
+		return reflect.ValueOf(&contents), nil
+	case TPMAlgECMQV:
+		var contents TPMSKeySchemeECMQV
 		u.contents = &contents
 		u.selector = TPMAlgID(hint)
 		return reflect.ValueOf(&contents), nil
@@ -2208,6 +2302,12 @@ func (u TPMUAsymScheme) get(hint int64) (reflect.Value, error) {
 		var contents TPMSKeySchemeECDH
 		if u.contents != nil {
 			contents = *u.contents.(*TPMSKeySchemeECDH)
+		}
+		return reflect.ValueOf(&contents), nil
+	case TPMAlgECMQV:
+		var contents TPMSKeySchemeECMQV
+		if u.contents != nil {
+			contents = *u.contents.(*TPMSKeySchemeECMQV)
 		}
 		return reflect.ValueOf(&contents), nil
 	case TPMAlgECDAA:
