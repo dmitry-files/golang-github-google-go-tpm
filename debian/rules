@@ -4,19 +4,8 @@ export DH_GOLANG_INSTALL_EXTRA := \
 	tpm2/test/testvectors/ecc_labeled_encaps.json \
 	tpm2/test/testvectors/rsa_labeled_encaps.json
 
-# exclude simulator tests, they rely on unpackaged
-# github.com/google/go-tpm-tools
 export DH_GOLANG_EXCLUDES := \
-	examples \
-	tpm2/transport/simulator
+	examples
 
 %:
 	dh $@ --builddirectory=_build --buildsystem=golang
-
-execute_before_dh_auto_test:
-# src/github.com/google/go-tpm/tpm2/transport/simulator/simulator.go:7:2: cannot find package "github.com/google/go-tpm-tools/simulator" in any of:
-	rm -fv _build/src/github.com/google/go-tpm/tpm2/crypto_test.go
-
-override_dh_auto_test:
-	DH_GOLANG_EXCLUDES="$(DH_GOLANG_EXCLUDES) tpm2/test" \
-		dh_auto_test $(DH_BUILD_OPTS)

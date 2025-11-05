@@ -2,14 +2,17 @@ Source: golang-github-google-go-tpm
 Section: golang
 Priority: optional
 Maintainer: Debian Go Packaging Team <team+pkg-go@tracker.debian.org>
-Uploaders: Maytham Alsudany <maytha8thedev@gmail.com>
+Uploaders:
+ Dmitry <debian@dmitry.ms>,
 Rules-Requires-Root: no
 Build-Depends:
  debhelper-compat (= 13),
  dh-golang,
  golang-any,
- golang-golang-x-sys-dev,
  golang-github-google-go-cmp-dev <!nocheck>,
+ golang-github-google-go-tpm-tools-dev,
+ golang-golang-x-sys-dev,
+ libssl-dev,
 Testsuite: autopkgtest-pkg-go
 Standards-Version: 4.7.2
 Vcs-Browser: https://salsa.debian.org/go-team/packages/golang-github-google-go-tpm
